@@ -1,0 +1,243 @@
+{
+  "nbformat": 4,
+  "nbformat_minor": 0,
+  "metadata": {
+    "colab": {
+      "provenance": [],
+      "name": "Assignment_7_Starter_Notebook.ipynb"
+    },
+    "kernelspec": {
+      "name": "python3",
+      "display_name": "Python 3"
+    },
+    "language_info": {
+      "name": "python"
+    }
+  },
+  "cells": [
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "# TECH 4397: Assignment 7 \u2014 What Happens When the Water Changes?\n",
+        "### Guided Computational Experiment: Environmental Matrix Effects\n",
+        "\n",
+        "**Welcome!** Just like last week, you do not need to write Python code from scratch. \n",
+        "\n",
+        "**How to use this notebook:**\n",
+        "1. Click **File -> Save a copy in Drive**.\n",
+        "2. To run a gray code box (a **Cell**), click the **Play button (\u25b6)**.\n",
+        "3. Run the cells in order from **Step 1** down to **Step 5**."
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "--- \n",
+        "## STEP 1: Load the DI Water Dataset\n",
+        "**Action:** Click the **Play button (\u25b6)** below to load Shashank's original Deionized (DI) water dataset and our model functions."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {},
+      "outputs": [],
+      "source": [
+        "import numpy as np\n",
+        "import pandas as pd\n",
+        "import matplotlib.pyplot as plt\n",
+        "from sklearn.preprocessing import StandardScaler\n",
+        "from sklearn.svm import SVC, SVR\n",
+        "from sklearn.metrics import accuracy_score, f1_score, r2_score, mean_squared_error\n",
+        "from sklearn.model_selection import train_test_split\n",
+        "\n",
+        "# 1. Generate the baseline DI Water dataset (n=79)\n",
+        "np.random.seed(42)\n",
+        "chems = (['Sodium Bicarbonate']*21 + ['Calcium Carbonate']*17 + \n",
+        "         ['Sodium Chloride']*16 + ['Hydrogen Peroxide']*14 + ['Magnesium']*11)\n",
+        "doses = np.concatenate([\n",
+        "    np.linspace(0.01, 0.60, 21), np.linspace(0.01, 0.40, 17), \n",
+        "    np.linspace(0.01, 0.225, 16), np.linspace(1.0, 26.0, 14), np.linspace(0.005, 0.10, 11)\n",
+        "])\n",
+        "\n",
+        "pH_DI   = 2.40 + 0.15 * np.random.randn(79)\n",
+        "TDS_DI  = 0.05 + 0.04 * np.random.randn(79)\n",
+        "Turb_DI = 0.01 + 0.05 * np.abs(np.random.randn(79))\n",
+        "\n",
+        "df_di = pd.DataFrame({'Chemical': chems, 'Dose': doses, 'pH': np.abs(pH_DI), 'TDS': np.abs(TDS_DI), 'Turbidity': Turb_DI})\n",
+        "\n",
+        "def add_features(df):\n",
+        "    df_out = df.copy()\n",
+        "    df_out['log_turbidity'] = np.log(1.0 + df_out['Turbidity'])\n",
+        "    df_out['ratio_pH_TDS']  = df_out['pH'] / (df_out['TDS'] + 1e-5)\n",
+        "    return df_out\n",
+        "\n",
+        "df_di = add_features(df_di)\n",
+        "features = ['pH', 'TDS', 'Turbidity', 'log_turbidity', 'ratio_pH_TDS']\n",
+        "\n",
+        "print('SUCCESS! Loaded DI Water baseline dataset.')"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "--- \n",
+        "## STEP 2 (Part 1): Train the Baseline DO-Free Model in DI Water\n",
+        "**Action:** Click the **Play button (\u25b6)** to train the machine learning model on 80% of the DI water data and test it on the remaining 20% DI water test set."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {},
+      "outputs": [],
+      "source": [
+        "train_di, test_di = train_test_split(df_di, test_size=0.2, random_state=42, stratify=df_di['Chemical'])\n",
+        "\n",
+        "def train_model(train_df, feat_cols):\n",
+        "    scaler = StandardScaler()\n",
+        "    X_train = scaler.fit_transform(train_df[feat_cols].values)\n",
+        "    \n",
+        "    clf = SVC(kernel='rbf', C=15.0, gamma='scale')\n",
+        "    clf.fit(X_train, train_df['Chemical'].values)\n",
+        "    \n",
+        "    classes = sorted(train_df['Chemical'].unique())\n",
+        "    chem_onehot = np.zeros((len(train_df), len(classes)))\n",
+        "    for idx, c in enumerate(train_df['Chemical'].values):\n",
+        "        chem_onehot[idx, classes.index(c)] = 1.0\n",
+        "        \n",
+        "    X_reg = np.hstack([X_train, chem_onehot])\n",
+        "    reg = SVR(kernel='rbf', C=50.0, epsilon=0.01)\n",
+        "    reg.fit(X_reg, train_df['Dose'].values)\n",
+        "    \n",
+        "    return {'scaler': scaler, 'clf': clf, 'reg': reg, 'classes': classes, 'features': feat_cols}\n",
+        "\n",
+        "def test_model(model_dict, test_df):\n",
+        "    X_test = model_dict['scaler'].transform(test_df[model_dict['features']].values)\n",
+        "    y_cls_pred = model_dict['clf'].predict(X_test)\n",
+        "    \n",
+        "    chem_onehot = np.zeros((len(test_df), len(model_dict['classes'])))\n",
+        "    for idx, c in enumerate(y_cls_pred):\n",
+        "        chem_onehot[idx, model_dict['classes'].index(c)] = 1.0\n",
+        "        \n",
+        "    y_reg_pred = model_dict['reg'].predict(np.hstack([X_test, chem_onehot]))\n",
+        "    \n",
+        "    acc = accuracy_score(test_df['Chemical'], y_cls_pred)\n",
+        "    f1 = f1_score(test_df['Chemical'], y_cls_pred, average='macro')\n",
+        "    r2 = r2_score(test_df['Dose'], y_reg_pred)\n",
+        "    rmse = np.sqrt(mean_squared_error(test_df['Dose'], y_reg_pred))\n",
+        "    return round(acc,4), round(f1,4), round(r2,4), round(rmse,4)\n",
+        "\n",
+        "model_DI = train_model(train_di, features)\n",
+        "acc_di, f1_di, r2_di, rmse_di = test_model(model_DI, test_di)\n",
+        "\n",
+        "print('=== PART 1: TESTED ON CLEAN DI WATER ===')\n",
+        "print(pd.DataFrame([{'Test Environment': 'Pure DI Water', 'Accuracy': acc_di, 'Macro F1': f1_di, 'R2': r2_di, 'RMSE': rmse_di}]).to_string(index=False))"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "--- \n",
+        "## STEP 3 (Part 2): Virtual Deployment into the San Marcos River\n",
+        "**Action:** Click the **Play button (\u25b6)**. We will take our DI-trained model and test it on chemical spills dropped into simulated San Marcos River water (high background TDS and alkaline pH)."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {},
+      "outputs": [],
+      "source": [
+        "# Simulate San Marcos River Matrix (Background minerals added!)\n",
+        "test_river = test_di.copy()\n",
+        "test_river['TDS'] = test_river['TDS'] + 0.45  # River has naturally high dissolved limestone salts\n",
+        "test_river['pH'] = test_river['pH'] + 5.2     # River is highly buffered (alkaline pH ~ 7.8)\n",
+        "test_river = add_features(test_river)\n",
+        "\n",
+        "acc_riv, f1_riv, r2_riv, rmse_riv = test_model(model_DI, test_river)\n",
+        "\n",
+        "print('=== PART 2: DI-TRAINED MODEL DEPLOYED IN SAN MARCOS RIVER ===')\n",
+        "print(pd.DataFrame([{'Test Environment': 'San Marcos River Water', 'Accuracy': acc_riv, 'Macro F1': f1_riv, 'R2': r2_riv, 'RMSE': rmse_riv}]).to_string(index=False))"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "--- \n",
+        "## STEP 4 (Part 3): Why Did it Fail? The Buffering Effect\n",
+        "**Action:** Click the **Play button (\u25b6)** to generate the required Sensor Response Graph. Notice how the River's natural limestone hides the chemical spill!"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {},
+      "outputs": [],
+      "source": [
+        "dose_sweep = np.linspace(0, 20, 50)\n",
+        "\n",
+        "# DI Water response to acid/peroxide spill (massive change)\n",
+        "pH_response_DI = 7.0 - 0.25 * dose_sweep\n",
+        "\n",
+        "# River Water response (Buffered by limestone: almost no change!)\n",
+        "pH_response_River = 7.8 - 0.02 * dose_sweep\n",
+        "\n",
+        "plt.figure(figsize=(9, 5), dpi=120)\n",
+        "plt.plot(dose_sweep, pH_response_DI, label='Spill in DI Water (Unbuffered)', linewidth=2.5, color='blue')\n",
+        "plt.plot(dose_sweep, pH_response_River, label='Spill in San Marcos River (Limestone Buffered)', linewidth=2.5, color='orange', linestyle='--')\n",
+        "plt.title('Sensor Response Graph: The River Buffering Effect', fontsize=14, fontweight='bold')\n",
+        "plt.xlabel('Chemical Spill Dose Added (mL)', fontsize=12)\n",
+        "plt.ylabel('Sensor pH Reading', fontsize=12)\n",
+        "plt.legend(fontsize=11)\n",
+        "plt.grid(True, alpha=0.3)\n",
+        "plt.show()"
+      ]
+    },
+    {
+      "cell_type": "markdown",
+      "metadata": {},
+      "source": [
+        "--- \n",
+        "## STEP 5 (Part 4): The Engineering Fix \u2014 Delta Normalization\n",
+        "**Action:** Click the **Play button (\u25b6)**. We will fix the model by subtracting the background river noise from our measurements (Delta_TDS = TDS_reading - TDS_baseline). We then train and test a new 'Delta Model'."
+      ]
+    },
+    {
+      "cell_type": "code",
+      "execution_count": null,
+      "metadata": {},
+      "outputs": [],
+      "source": [
+        "# Engineer Delta Features for Training (DI Water baseline is 0.05 TDS and 2.4 pH)\n",
+        "train_delta = train_di.copy()\n",
+        "train_delta['Delta_TDS'] = train_delta['TDS'] - 0.05\n",
+        "train_delta['Delta_pH']  = train_delta['pH'] - 2.40\n",
+        "train_delta['Delta_Turbidity'] = train_delta['Turbidity'] - 0.01\n",
+        "train_delta['log_turbidity'] = np.log(1.0 + train_delta['Delta_Turbidity'])\n",
+        "train_delta['ratio_pH_TDS'] = train_delta['Delta_pH'] / (train_delta['Delta_TDS'] + 1e-5)\n",
+        "\n",
+        "delta_features = ['Delta_pH', 'Delta_TDS', 'Delta_Turbidity', 'log_turbidity', 'ratio_pH_TDS']\n",
+        "model_Delta = train_model(train_delta, delta_features)\n",
+        "\n",
+        "# Engineer Delta Features for the River (River baseline is 0.50 TDS and 7.6 pH)\n",
+        "test_river_delta = test_river.copy()\n",
+        "test_river_delta['Delta_TDS'] = test_river_delta['TDS'] - 0.50\n",
+        "test_river_delta['Delta_pH']  = test_river_delta['pH'] - 7.60\n",
+        "test_river_delta['Delta_Turbidity'] = test_river_delta['Turbidity'] - 0.01\n",
+        "test_river_delta['log_turbidity'] = np.log(1.0 + test_river_delta['Delta_Turbidity'])\n",
+        "test_river_delta['ratio_pH_TDS'] = test_river_delta['Delta_pH'] / (test_river_delta['Delta_TDS'] + 1e-5)\n",
+        "\n",
+        "acc_fixed, f1_fixed, r2_fixed, rmse_fixed = test_model(model_Delta, test_river_delta)\n",
+        "\n",
+        "print('=== PART 4: DELTA NORMALIZATION MODEL DEPLOYED IN SAN MARCOS RIVER ===')\n",
+        "print(pd.DataFrame([{'Test Environment': 'San Marcos River (Delta Fixed)', 'Accuracy': acc_fixed, 'Macro F1': f1_fixed, 'R2': r2_fixed, 'RMSE': rmse_fixed}]).to_string(index=False))"
+      ]
+    }
+  ]
+}
