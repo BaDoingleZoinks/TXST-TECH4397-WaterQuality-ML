@@ -6,16 +6,16 @@ Created by Alejo Ruiz Camauer
 # TECH 4397 - SPECIAL PROBLEMS - FALL 2026 - TEXAS STATE UNIVERSITY
 
 Authors:
-Alejo Ruiz Camauer (Undergraduate) 
-Gia Spencer (Undergraduate)
-Saul Gonzalez (Undergraduate)
-Skylar Dudley (Undergraduate)
+- Alejo Ruiz Camauer (Undergraduate) 
+- Gia Spencer (Undergraduate)
+- Saul Gonzalez (Undergraduate)
+- Skylar Dudley (Undergraduate)
 
-Shashank Musunooru (original thesis author)
+- Shashank Musunooru (original thesis author)
 
-Rodney Raymond Okanya (TA)
-Dr. Meysam Khaleghian
-Dr. Junseo Choi 
+- Rodney Raymond Okanya (TA)
+- Dr. Meysam Khaleghian
+- Dr. Junseo Choi 
 
 ---
 
