@@ -20,7 +20,11 @@ Authors:
 ---
 
 # Abstract
-aaabbbbccccddd
+This repository collects the data, analysis notebooks, reports, and supporting materials developed during a semester-long TECH 4397 project on sensor-based water-quality monitoring. Building on Shashank Musunooru’s experimental framework, the project examined whether pH, conductivity-derived total dissolved solids, dissolved oxygen, and turbidity measurements could support machine-learning identification of five chemicals and estimation of their doses.
+
+The work progressed from statistical analysis and model evaluation to audits of sensor transduction, experimental procedures, dissolved-oxygen drift, natural-water matrix effects, and chemical mixtures. Findings highlighted the limits of transferring controlled laboratory models to field conditions: baseline correction can remove constant offsets, but cannot restore chemically suppressed responses or supply the independent information needed to distinguish ambiguous mixtures.
+
+The repository preserves experimental source data alongside computational demonstrations and documents their assumptions, limitations, and corrections. It provides a basis for inspecting the analysis, reproducing supported results, and designing further experiments toward reliable field monitoring.
 
 # Machine learning architecture
 
