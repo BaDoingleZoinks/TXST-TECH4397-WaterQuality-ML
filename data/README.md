@@ -1,9 +1,9 @@
-# Data and Notebooks
+# Data
 
-This folder contains the original experimental data and Python notebooks used in the TECH 4397 water-quality monitoring project.
+Original experimental data for the TECH 4397 water-quality monitoring project, based on Shashank Musunooru’s thesis research.
 
-The source data records sensor responses to additions of magnesium, sodium chloride, calcium carbonate, sodium bicarbonate, and hydrogen peroxide. Measurements include raw voltage outputs from pH, conductivity/TDS, dissolved-oxygen, and turbidity sensors.
+The datasets record responses to additions of magnesium, sodium chloride, calcium carbonate, sodium bicarbonate, and hydrogen peroxide using pH, conductivity/TDS, dissolved-oxygen, and turbidity sensors.
 
-The notebooks explore chemical classification, dose estimation, sensor drift, water-matrix effects, and contaminant mixtures. Some generate synthetic data or simulated disturbances rather than loading the original measurements. Consult each notebook before interpreting its results.
+Sensor readings are **raw voltage outputs** unless otherwise labeled. Solid doses are recorded in grams and hydrogen peroxide doses in milliliters; these require conversion before comparison as concentrations.
 
-**Keep original data files unchanged and save derived datasets separately**. Raw sensor voltages require calibration before interpretation as physical water-quality units.
+**Preserve original files unchanged**. Label derived datasets and document their transformations.
