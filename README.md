@@ -11,11 +11,11 @@ Authors:
 - Saul Gonzalez (Undergraduate)
 - Skylar Dudley (Undergraduate)
 
-- Shashank Musunooru (original thesis author)
+- Shashank Musunooru (Graduate, original thesis author)
 
-- Rodney Raymond Okanya (TA)
-- Dr. Meysam Khaleghian
-- Dr. Junseo Choi 
+- Rodney Raymond Okanya (Research Associate)
+- Dr. Meysam Khaleghian (Course Overseer)
+- Dr. Junseo Choi (Course Overseer)
 
 ---
 
