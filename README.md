@@ -13,7 +13,7 @@ Authors:
 
 - Shashank Musunooru (Graduate, original thesis author)
 
-- Rodney Raymond Okanya (Research Associate)
+- Rodney Raymond Okanya (Research Associate, Department of Engineering Technology)
 - Dr. Meysam Khaleghian (Course Overseer)
 - Dr. Junseo Choi (Course Overseer)
 
